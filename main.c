@@ -9,11 +9,6 @@
 #include<ctype.h>
 
 
-
-
-
-
-
 char ceaser_cipher_decoder(int ch) {
   ch = toupper(ch);
 
@@ -37,7 +32,7 @@ char char_to_num(char ch){
 }
 
 
-void print_board(char board[9][9]) {
+void print_board(char** board) {
   int n = 9;
   for(int i=0; i<n; i++) {
     for(int j=0; j<n; j++) {
@@ -49,31 +44,18 @@ void print_board(char board[9][9]) {
 }
 
 
+char **create_board(char *filename, int n){
 
+  char **board;
+  board = malloc(sizeof(int*) * n);
 
-
-int main(int argc , char *argv[] )
-{
+  for(int a = 0; a < n; a++) {
+      board[a] = malloc(sizeof(int*) * n);
+  }
 
   FILE *fp;
-  char *filename;
   int ch;
-  char * buffer = 0;
-  long length;
   int s=0;
-  int n, a, b;
-  char board[9][9];
-
-
-  if(argc < 2){
-    printf("missing file name\n");
-    return(1);
-  }
-  else {
-    filename = argv[1];
-    printf("filename : %s\n", filename);
-
-  }
 
   fp = fopen(filename, "r");
 
@@ -82,49 +64,130 @@ int main(int argc , char *argv[] )
     do {
         ch = fgetc (fp);
         if ( isgraph(ch) ){
-           // int i = putchar (ch);
-           if(s==0){
-             n = (char)ch - '0';
-             printf("\n n : %d\n", n);
-           }
-           else if(s==2){
-             a = (char)ch - '0';
-             printf("\n a : %d\n", a);
-           }
-           else if(s==4){
-             b = (char)ch - '0';
-             printf("\n b : %d\n", b);
-           }
-           else {
-             char el = ceaser_cipher_decoder(ch);
-             if(el!='#' && el!='*'){
-
-               // printf("%c:i %d/j %d-", el, i,j);
-               board[i][j] = el;
-               i++;
-               // printf("%c:%d - ", el ,ele);
-             }
-             else if(el=='#'){
-               j++;
-               i=0;
-             }
-           }
-
-
-           s++;
+          if(s>4) {
+            char el = ceaser_cipher_decoder(ch);
+            if(el!='#' && el!='*'){
+              board[i][j] = el;
+              i++;
+            }
+            else if(el=='#'){
+              j++;
+              i=0;
+            }
+          }
+          s++;
         }
       } while (ch != EOF);
+      fclose(fp);
 
-      printf("\nsize : %d\n", s);
-      print_board(board);
-
-
+      //printf("\nsize : %d\n", s);
   }
-
-
 
   else {
     printf("failed to open file");
+  }
+
+  return board;
+}
+
+
+
+int main(int argc , char *argv[] )
+{
+
+  // const int LIMIT = 5;
+  // int queue = [LIMIT];
+  // int front,rear;
+  FILE *fp;
+  char *filename;
+  char **board;
+  int n, a, b;
+  int pid1, pid2, pid3, pid4;
+
+
+
+  if(argc < 2){
+    printf("missing file name\n");
+    return(1);
+  }
+  else {
+    filename = argv[1];
+  }
+
+  printf("parent opens file : %s - parentID : %d\n", filename, getpid());
+
+  fp = fopen(filename, "r");
+
+// detemine size of board
+  if(fp) {
+    int i=0, j=0,s=0;
+    do {
+        char ch = fgetc (fp);
+        if ( isgraph(ch) ){
+           if(s==0){
+             n = (char)ch - '0';
+           }
+           else if(s==2){
+             a = (char)ch - '0';
+           }
+           else if(s==4){
+             b = (char)ch - '0';
+           }
+           s++;
+        }
+      } while (s<5);
+      fclose(fp);
+
+  }
+
+  else {
+    printf("failed to open file");
+  }
+
+
+  //first child -> create board
+  pid1 = fork();
+  if (pid1==0){
+    printf("\nfirst child creating board - firstChildID : %d\n", getpid());
+    board = create_board(filename, (int)n);
+    for(int i=0; i<(int)n; i++) {
+      for(int j=0; j<(int)n; j++) {
+        printf("%c ", board[i][j]);
+      }
+      printf("\n");
+    }
+    exit(0);
+  }
+  else {
+    sleep(1);
+    pid2 = fork();
+
+    if(pid2==0){
+      printf("\nsecond child- secondChildID : %d\n", getpid());
+    }
+    else {
+      sleep(1);
+      pid3 = fork();
+
+      if(pid3==0){
+        printf("\nthird child- thirdChildID : %d\n", getpid());
+      }
+
+      else {
+        sleep(1);
+        pid4 = fork();
+
+        if(pid4==0){
+          printf("\nforth child- forthChildID : %d\n", getpid());
+        }
+        else{
+          sleep(1);
+          printf("\nin parent- parentID : %d\n", getpid());
+        }
+
+
+      }
+    }
   }
 
    return 0;
