@@ -6,7 +6,11 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
-#include<ctype.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+#define FIFO_FILE "FIFOfile"
 
 
 char ceaser_cipher_decoder(int ch) {
@@ -25,24 +29,21 @@ char ceaser_cipher_decoder(int ch) {
 
 }
 
-
 char char_to_num(char ch){
   char num = ch - 'A';
   return num;
 }
 
-
-void print_board(char** board) {
-  int n = 9;
-  for(int i=0; i<n; i++) {
-    for(int j=0; j<n; j++) {
-      printf("%c ", board[i][j]);
-    }
-    printf("\n");
-  }
-
-}
-
+// void print_board(char** board) {
+//   int n = 9;
+//   for(int i=0; i<n; i++) {
+//     for(int j=0; j<n; j++) {
+//       printf("%c ", board[i][j]);
+//     }
+//     printf("\n");
+//   }
+//
+// }
 
 char **create_board(char *filename, int n){
 
@@ -91,18 +92,14 @@ char **create_board(char *filename, int n){
 }
 
 
-
 int main(int argc , char *argv[] )
 {
 
-  // const int LIMIT = 5;
-  // int queue = [LIMIT];
-  // int front,rear;
   FILE *fp;
   char *filename;
-  char **board;
+  //char **board;
   int n, a, b;
-  int pid1, pid2, pid3, pid4;
+  //int pid1, pid2, pid3, pid4;
 
 
 
@@ -146,43 +143,84 @@ int main(int argc , char *argv[] )
 
 
   //first child -> create board
-  pid1 = fork();
+  int pid1 = vfork();
+
   if (pid1==0){
+    int fd;
+    char **board;
     printf("\nfirst child creating board - firstChildID : %d\n", getpid());
     board = create_board(filename, (int)n);
-    for(int i=0; i<(int)n; i++) {
-      for(int j=0; j<(int)n; j++) {
-        printf("%c ", board[i][j]);
+
+
+
+      for(int i=0; i<9; i++) {
+        for(int j=0; j<9; j++) {
+          printf("%c ", board[i][j]);
+        }
+        printf("\n");
       }
-      printf("\n");
-    }
+
+
+    int size = (int)n * (int)n;
+
+
+
+    fd = open(FIFO_FILE, O_CREAT|O_RDWR);
+    write(fd, board, size*sizeof(char));
+
+    close(fd);
+
     exit(0);
+
   }
   else {
-    sleep(1);
-    pid2 = fork();
+    //sleep(1);
+    int pid2 = vfork();
+    int fd2;
+    char **board2;
+    board2 = malloc(sizeof(int*) * 9);
 
+    for(int a = 0; a < 9; a++) {
+        board2[a] = malloc(sizeof(int*) * 9);
+    }
+    //int size = (int)n * (int)n;
     if(pid2==0){
-      printf("\nsecond child- secondChildID : %d\n", getpid());
+      printf("\nsecond child - secondChildID : %d\n" ,getpid());
+
+      int size = (int)n * (int)n;
+      //int size = 81;
+
+      //fd2 = open(FIFO_FILE, O_RDWR);
+      //read(fd2, board2, size*sizeof(char));
+
+
+
+
+
+
+
+      exit(0);
     }
     else {
-      sleep(1);
-      pid3 = fork();
+      //sleep(1);
+      int pid3 = vfork();
 
       if(pid3==0){
         printf("\nthird child- thirdChildID : %d\n", getpid());
       }
 
       else {
-        sleep(1);
-        pid4 = fork();
+        //sleep(1);
+        int pid4 = vfork();
 
         if(pid4==0){
           printf("\nforth child- forthChildID : %d\n", getpid());
+          exit(0);
         }
         else{
-          sleep(1);
+          //sleep(1);
           printf("\nin parent- parentID : %d\n", getpid());
+          exit(0);
         }
 
 
