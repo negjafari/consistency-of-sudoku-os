@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 
 
-#define FIFO_FILE "file3"
+#define FIFO_FILE "file4"
 
 
 
@@ -72,6 +72,38 @@ char **create_board(char *filename, int n){
   }
 
   return board;
+}
+
+
+int row_duplication(char char_array[], int size){
+  char board[size][size];
+
+
+  for(int i=0; i<size;i++){
+    for(int j=0;j<size;j++){
+      board[i][j] = char_array[(j*size) + i];
+    }
+  }
+
+
+  //row traverse
+  for (int row = 0; row < size; row++)
+   {
+       for (int col = 0; col < size; col++)
+       {
+           char num = board[row][col];
+           for (int otherCol = col + 1; otherCol < size; otherCol++)
+           {
+               if (num == board[row][otherCol])
+               {
+                   return 0;
+               }
+           }
+       }
+   }
+
+  return 1;
+
 }
 
 
@@ -178,6 +210,10 @@ int main(int argc , char *argv[]) {
         for(int i=0; i<s2*s2; i++) {
             printf("%c ", nb2[i]);
         }
+        printf("\n");
+
+        int result = row_duplication(nb2, s2);
+        printf("result : %d\n",result);
 
 
         close(f2);
