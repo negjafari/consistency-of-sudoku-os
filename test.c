@@ -178,27 +178,23 @@ int main(int argc , char *argv[] )
     int pid2 = vfork();
     int fd2;
     char **board2;
-    board2 = malloc(sizeof(int*) * 9);
+    int size2 = (int)n * (int)n;
 
-    for(int a = 0; a < 9; a++) {
-        board2[a] = malloc(sizeof(int*) * 9);
-    }
-    //int size = (int)n * (int)n;
     if(pid2==0){
       printf("\nsecond child - secondChildID : %d\n" ,getpid());
 
-      int size = (int)n * (int)n;
-      //int size = 81;
+      int fd2 = open(FIFO_FILE, O_RDWR);
+      read(fd2, board2, size2*sizeof(char));
 
-      //fd2 = open(FIFO_FILE, O_RDWR);
-      //read(fd2, board2, size*sizeof(char));
+      printf("\n");
+      for(int i=0; i <(int)n ; i++){
+        for(int j=0 ; j<(int)n ; j++){
+          printf("%c ", board2[i][j]);
+        }
+      }
+      printf("\n");
 
-
-
-
-
-
-
+      close(fd2);
       exit(0);
     }
     else {
