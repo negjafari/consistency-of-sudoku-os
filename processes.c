@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 
 
-#define FIFO_FILE "file4"
+#define FIFO_FILE "fifo1"
 
 
 
@@ -207,23 +207,46 @@ int main(int argc , char *argv[]) {
         int f2 = open(FIFO_FILE, O_RDWR);
         read(f2, nb2, s2*s2);
 
-        for(int i=0; i<s2*s2; i++) {
-            printf("%c ", nb2[i]);
-        }
-        printf("\n");
 
         int result = row_duplication(nb2, s2);
         printf("result : %d\n",result);
-
-
         close(f2);
+
+
+        printf("\n");
+        for(int g=0 ; g<s2*s2 ; g++){
+          printf("%c ",nb2[g]);
+        }
+        printf("\n");
+
+
+        int f22 = open(FIFO_FILE, O_RDWR);
+        write(f22, nb2, s2*s2);
+        close(f22);
+
+
+
         exit(0);
       }
       else {
         int pid3 = vfork();
+        int f3;
+        int s3 = (int)n;
+        char nb3[s3*s3];
 
         if(pid3==0){
           printf("\nthird child- thirdChildID : %d\n", getpid());
+
+          int f3 = open(FIFO_FILE, O_RDWR);
+          read(f3, nb3, s3*s3);
+
+          for(int v=0 ; v<s3*s3 ; v++){
+            printf("%c ", nb3[v]);
+          }
+
+
+
+          close(f3);
           exit(0);
         }
         else {
