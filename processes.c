@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 
 
-#define FIFO_FILE "fifo1"
+#define FIFO_FILE "fifo78"
 
 
 
@@ -52,7 +52,7 @@ char **create_board(char *filename, int n){
           if(s>4) {
             char el = ceaser_cipher_decoder(ch);
             if(el!='#' && el!='*'){
-              board[i][j] = el;
+              board[j][i] = el;
               i++;
             }
             else if(el=='#'){
@@ -81,8 +81,16 @@ int row_duplication(char char_array[], int size){
 
   for(int i=0; i<size;i++){
     for(int j=0;j<size;j++){
-      board[i][j] = char_array[(j*size) + i];
+      board[j][i] = char_array[(j*size) + i];
     }
+  }
+
+
+  for(int i=0; i<size;i++){
+    for(int j=0;j<size;j++){
+       printf("%c ", board[i][j]);
+    }
+    printf("\n");
   }
 
 
@@ -104,6 +112,46 @@ int row_duplication(char char_array[], int size){
 
   return 1;
 
+}
+
+
+int col_duplication(char char_array2[], int size2){
+  char board2[size2][size2];
+
+
+  for(int i=0; i<size2;i++){
+    for(int j=0;j<size2;j++){
+      board2[j][i] = char_array2[(j*size2) + i];
+    }
+  }
+
+
+  for(int i=0; i<size2;i++){
+    for(int j=0;j<size2;j++){
+       printf("%c ", board2[i][j]);
+    }
+    printf("\n");
+  }
+
+
+
+  //column traverse
+  for (int row = 0; row < size2; row++)
+   {
+       for (int col = 0; col < size2; col++)
+       {
+           char num = board2[col][row];
+           for (int otherCol = col + 1; otherCol < size2; otherCol++)
+           {
+               if (num == board2[otherCol][row])
+               {
+                   return 0;
+               }
+           }
+       }
+   }
+
+  return 1;
 }
 
 
@@ -208,21 +256,21 @@ int main(int argc , char *argv[]) {
         read(f2, nb2, s2*s2);
 
 
-        int result = row_duplication(nb2, s2);
-        printf("result : %d\n",result);
+        int result1 = row_duplication(nb2, s2);
+        printf("result1 : %d\n",result1);
         close(f2);
 
-
-        printf("\n");
-        for(int g=0 ; g<s2*s2 ; g++){
-          printf("%c ",nb2[g]);
-        }
-        printf("\n");
 
 
         int f22 = open(FIFO_FILE, O_RDWR);
         write(f22, nb2, s2*s2);
         close(f22);
+
+        // printf("\n");
+        // for(int g=0 ; g<s2*s2 ; g++){
+        //   printf("%c ",nb2[g]);
+        // }
+        // printf("\n");
 
 
 
@@ -239,14 +287,21 @@ int main(int argc , char *argv[]) {
 
           int f3 = open(FIFO_FILE, O_RDWR);
           read(f3, nb3, s3*s3);
-
-          for(int v=0 ; v<s3*s3 ; v++){
-            printf("%c ", nb3[v]);
-          }
-
-
-
           close(f3);
+
+          int result2 = col_duplication(nb3, s3);
+          printf("result2 : %d\n",result2);
+
+
+          // printf("\n");
+          // for(int l = 0 ; l<s3*s3 ; l++){
+          //   printf("%c ", nb3[l]);
+          // }
+          // printf("\n");
+
+
+
+
           exit(0);
         }
         else {
