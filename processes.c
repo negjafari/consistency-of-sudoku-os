@@ -86,14 +86,6 @@ int row_duplication(char char_array[], int size){
   }
 
 
-  for(int i=0; i<size;i++){
-    for(int j=0;j<size;j++){
-       printf("%c ", board[i][j]);
-    }
-    printf("\n");
-  }
-
-
   //row traverse
   for (int row = 0; row < size; row++)
    {
@@ -126,15 +118,6 @@ int col_duplication(char char_array2[], int size2){
   }
 
 
-  for(int i=0; i<size2;i++){
-    for(int j=0;j<size2;j++){
-       printf("%c ", board2[i][j]);
-    }
-    printf("\n");
-  }
-
-
-
   //column traverse
   for (int row = 0; row < size2; row++)
    {
@@ -152,6 +135,42 @@ int col_duplication(char char_array2[], int size2){
    }
 
   return 1;
+}
+
+
+int submatrix_duplication(char char_array3[], int size3, int a, int b, int row, int col) {
+  char board3[size3][size3];
+  char square[a*b];
+
+
+  for(int i=0; i<size3;i++){
+    for(int j=0;j<size3;j++){
+      board3[j][i] = char_array3[(j*size3) + i];
+    }
+  }
+
+
+
+  int index = 0;
+  for(int i = 0 ; i<a ; i++){
+    for(int j=0 ; j<b ; j++) {
+      char ch = board3[i+row][j+col];
+      square[index]=ch;
+      index++;
+    }
+  }
+
+  for(int i=0 ; i<index-1 ; i++){
+    for(int j=i+1 ; j<index ; j++){
+      if(square[i] == square[j]){
+        return 0;
+      }
+    }
+  }
+
+
+  return 1;
+
 }
 
 
@@ -250,14 +269,19 @@ int main(int argc , char *argv[]) {
 
       if(pid2==0){
         //check row
-        printf("\nsecond child - secondChildID : %d\n" ,getpid());
+        printf("\nsecond child checking row duplication - secondChildID : %d\n" ,getpid());
 
-        int f2 = open(FIFO_FILE, O_RDWR);
+        f2 = open(FIFO_FILE, O_RDWR);
         read(f2, nb2, s2*s2);
 
 
         int result1 = row_duplication(nb2, s2);
-        printf("result1 : %d\n",result1);
+        if(result1==0) {
+          printf("DUPLICATION IN ROWS\n");
+        }
+        else {
+          printf("NO DUPLICATION IN ROWS\n");
+        }
         close(f2);
 
 
@@ -265,13 +289,6 @@ int main(int argc , char *argv[]) {
         int f22 = open(FIFO_FILE, O_RDWR);
         write(f22, nb2, s2*s2);
         close(f22);
-
-        // printf("\n");
-        // for(int g=0 ; g<s2*s2 ; g++){
-        //   printf("%c ",nb2[g]);
-        // }
-        // printf("\n");
-
 
 
         exit(0);
@@ -283,31 +300,71 @@ int main(int argc , char *argv[]) {
         char nb3[s3*s3];
 
         if(pid3==0){
-          printf("\nthird child- thirdChildID : %d\n", getpid());
+          printf("\nthird child checking column duplication- thirdChildID : %d\n", getpid());
 
-          int f3 = open(FIFO_FILE, O_RDWR);
+          f3 = open(FIFO_FILE, O_RDWR);
           read(f3, nb3, s3*s3);
           close(f3);
 
           int result2 = col_duplication(nb3, s3);
-          printf("result2 : %d\n",result2);
+          if(result2==0) {
+            printf("DUPLICATION IN COLUMNS\n");
+          }
+          else {
+            printf("NO DUPLICATION IN COLUMNS\n");
+          }
+          close(f2);
 
-
-          // printf("\n");
-          // for(int l = 0 ; l<s3*s3 ; l++){
-          //   printf("%c ", nb3[l]);
-          // }
-          // printf("\n");
-
-
-
+          int f33 = open(FIFO_FILE, O_RDWR);
+          write(f33, nb3, s3*s3);
+          close(f33);
 
           exit(0);
         }
         else {
           int pid4 = vfork();
+          int f4;
+          int s4 = (int)n;
+          char nb4[s4*s4];
           if(pid4==0){
-            printf("\nforth child- forthChildID : %d\n", getpid());
+            printf("\nforth child checking squares duplication - forthChildID : %d\n", getpid());
+
+            f4 = open(FIFO_FILE, O_RDWR);
+            read(f4, nb4, s4*s4);
+            close(f4);
+
+            int result3 = -1;
+
+
+            int startRow = 0;
+            int startCol = 0;
+            for(int i=0; i<s4 && result3!=0; i++){
+              for(int j=0 ; j<s4 && result3!=0; j++){
+                if( (i - (i % (int)a)) == startRow &&
+                    (j - (j % (int)b)) == startCol &&
+                     i!=0 && j!=0)
+                {
+                }
+                else {
+                  startRow = i - (i % (int)a);
+                  startCol = j - (j % (int)b);
+
+                  result3 = submatrix_duplication(nb4, s4,
+                    (int)a, (int)b , startRow, startCol);
+
+                }
+              }
+            }
+
+            if(result3==0) {
+              printf("DUPLICATION IN A SQUARE\n");
+            }
+            else {
+              printf("NO DUPLICATION IN SQUARES\n");
+            }
+            close(f2);
+
+
             exit(0);
           }
 
