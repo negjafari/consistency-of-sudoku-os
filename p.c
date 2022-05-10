@@ -9,10 +9,6 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 
-//O_RDONLY - read only
-//O_WRONLY - write only
-//O_RDWR - read and write
-
 
 #define FIFO_FILE "/home/neg/os-project/Fifo"
 
@@ -90,7 +86,6 @@ int row_duplication(char char_array[], int size){
     }
   }
 
-
   for(int i=0; i<size;i++){
     for(int j=0;j<size;j++){
       printf("%c ", board[i][j]);
@@ -129,6 +124,7 @@ int col_duplication(char char_array2[], int size2){
       board2[j][i] = char_array2[(j*size2) + i];
     }
   }
+
 
   for(int i=0; i<size2;i++){
     for(int j=0;j<size2;j++){
@@ -209,9 +205,7 @@ int main(int argc , char *argv[]) {
   FILE *fp;
   char *filename;
   int n, a, b;
-  int f1, f2, f3,f4;
   mkfifo(FIFO_FILE, S_IFIFO|0640);
-
   int fd = open(FIFO_FILE, O_RDWR);
 
 
@@ -263,7 +257,6 @@ int main(int argc , char *argv[]) {
       int s1 = (int)n;
       char nb1[s1*s1];
 
-
       printf("\nfirst child creating board - firstChildID : %d\n", getpid());
       b1 = create_board(filename, (int)n);
 
@@ -286,9 +279,12 @@ int main(int argc , char *argv[]) {
         }
 
 
+      // f1 = open(FIFO_FILE, O_CREAT|O_RDWR);
+      // write(f1, nb1, s1*s1);
 
-      //f1 = open(FIFO_FILE, O_WRONLY);
       write(fd, nb1, s1*s1);
+
+
       //close(f1);
 
       exit(0);
@@ -306,8 +302,9 @@ int main(int argc , char *argv[]) {
         printf("\nsecond child checking row duplication - secondChildID : %d\n" ,getpid());
 
         //f2 = open(FIFO_FILE, O_RDWR);
-        read(fd, nb2, s2*s2);
+        //read(f2, nb2, s2*s2);
 
+        read(fd, nb2, s2*s2);
 
 
         int result1 = row_duplication(nb2, s2);
@@ -317,29 +314,111 @@ int main(int argc , char *argv[]) {
         else {
           printf("NO DUPLICATION IN ROWS\n");
         }
-
-        //write(f2, nb2, s2*s2);
         //close(f2);
 
 
 
-
-        // int f22 = open(FIFO_FILE, O_WRONLY);
+        // int f22 = open(FIFO_FILE, O_RDWR);
         // write(f22, nb2, s2*s2);
         // close(f22);
 
-
+        write(fd, nb2, s2*s2);
         exit(0);
       }
-
       else {
-        printf("\nin parent- parentID : %d\n", getpid());
-        exit(0);
+        int pid3 = vfork();
+        //int f3;
+        int s3 = (int)n;
+        char nb3[s3*s3];
+
+        if(pid3==0){
+          printf("\nthird child checking column duplication- thirdChildID : %d\n", getpid());
+
+          //f3 = open(FIFO_FILE, O_RDWR);
+          read(fd, nb3, s3*s3);
+          //close(f3);
+
+          int result2 = col_duplication(nb3, s3);
+          if(result2==0) {
+            printf("DUPLICATION IN COLUMNS\n");
+          }
+          else {
+            printf("NO DUPLICATION IN COLUMNS\n");
+          }
+          //close(f2);
+
+          // int f33 = open(FIFO_FILE, O_RDWR);
+          // write(f33, nb3, s3*s3);
+          // close(f33);
+
+          write(fd, nb3, s3*s3);
+          exit(0);
+        }
+        else {
+          int pid4 = vfork();
+          //int f4;
+          int s4 = (int)n;
+          char nb4[s4*s4];
+          if(pid4==0){
+            printf("\nforth child checking squares duplication - forthChildID : %d\n", getpid());
+
+            //f4 = open(FIFO_FILE, O_RDWR);
+            //read(f4, nb4, s4*s4);
+            //close(f4);
+
+
+            read(fd, nb4, s4*s4);
+
+            int result3 = -1;
+
+
+            int startRow = 0;
+            int startCol = 0;
+            bool flag = false;
+            for(int i=0; i<s4 && result3!=0; i++){
+              for(int j=0 ; j<s4 && result3!=0; j++){
+                if( (i - (i % (int)a)) == startRow &&
+                    (j - (j % (int)b)) == startCol &&
+                     i!=0 && j!=0)
+                {
+                }
+                else {
+                  startRow = i - (i % (int)a);
+                  startCol = j - (j % (int)b);
+
+                  if(i==0 && j==0){
+                    flag = true;
+                  }
+
+                  result3 = submatrix_duplication(flag, nb4, s4,
+                    (int)a, (int)b , startRow, startCol);
+                    flag = false;
+
+                }
+              }
+            }
+
+            if(result3==0) {
+              printf("DUPLICATION IN A SQUARE\n");
+            }
+            else {
+              printf("NO DUPLICATION IN SQUARES\n");
+            }
+
+
+            exit(0);
+          }
+
+          else {
+            printf("\nin parent- parentID : %d\n", getpid());
+            exit(0);
+          }
+        }
       }
     }
 
-
     close(fd);
+
     return 0;
 
 }
