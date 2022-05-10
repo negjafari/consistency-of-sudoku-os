@@ -10,7 +10,9 @@
 #include <stdbool.h>
 
 
-#define FIFO_FILE "/home/neg/os-project/Fifo"
+#define FIFO_FILE_BOARD "/home/neg/os-project/fifo_board"
+#define FIFO_FILE_RESULT "/home/neg/os-project/fifo_result"
+
 
 
 
@@ -205,8 +207,14 @@ int main(int argc , char *argv[]) {
   FILE *fp;
   char *filename;
   int n, a, b;
-  mkfifo(FIFO_FILE, S_IFIFO|0640);
-  int fd = open(FIFO_FILE, O_RDWR);
+
+  mkfifo(FIFO_FILE_BOARD, S_IFIFO|0640);
+  int fd1 = open(FIFO_FILE_BOARD, O_RDWR);
+
+  mkfifo(FIFO_FILE_RESULT, S_IFIFO|0640);
+  int fd2 = open(FIFO_FILE_RESULT, O_RDWR);
+
+
 
 
   if(argc < 2){
@@ -279,13 +287,7 @@ int main(int argc , char *argv[]) {
         }
 
 
-      // f1 = open(FIFO_FILE, O_CREAT|O_RDWR);
-      // write(f1, nb1, s1*s1);
-
-      write(fd, nb1, s1*s1);
-
-
-      //close(f1);
+      write(fd1, nb1, s1*s1);
 
       exit(0);
 
@@ -293,7 +295,6 @@ int main(int argc , char *argv[]) {
     else {
 
       int pid2 = vfork();
-      //int f2;
       int s2 = (int)n;
       char nb2[s2*s2];
 
@@ -301,10 +302,7 @@ int main(int argc , char *argv[]) {
         //check row
         printf("\nsecond child checking row duplication - secondChildID : %d\n" ,getpid());
 
-        //f2 = open(FIFO_FILE, O_RDWR);
-        //read(f2, nb2, s2*s2);
-
-        read(fd, nb2, s2*s2);
+        read(fd1, nb2, s2*s2);
 
 
         int result1 = row_duplication(nb2, s2);
@@ -314,29 +312,23 @@ int main(int argc , char *argv[]) {
         else {
           printf("NO DUPLICATION IN ROWS\n");
         }
-        //close(f2);
+
+        write(fd2, &result1, sizeof(result1));
 
 
-
-        // int f22 = open(FIFO_FILE, O_RDWR);
-        // write(f22, nb2, s2*s2);
-        // close(f22);
-
-        write(fd, nb2, s2*s2);
+        write(fd1, nb2, s2*s2);
         exit(0);
       }
       else {
         int pid3 = vfork();
-        //int f3;
         int s3 = (int)n;
         char nb3[s3*s3];
+        int pre_result1;
 
         if(pid3==0){
           printf("\nthird child checking column duplication- thirdChildID : %d\n", getpid());
 
-          //f3 = open(FIFO_FILE, O_RDWR);
-          read(fd, nb3, s3*s3);
-          //close(f3);
+          read(fd1, nb3, s3*s3);
 
           int result2 = col_duplication(nb3, s3);
           if(result2==0) {
@@ -345,29 +337,34 @@ int main(int argc , char *argv[]) {
           else {
             printf("NO DUPLICATION IN COLUMNS\n");
           }
-          //close(f2);
 
-          // int f33 = open(FIFO_FILE, O_RDWR);
-          // write(f33, nb3, s3*s3);
-          // close(f33);
+          read(fd2, &pre_result1, sizeof(pre_result1));
 
-          write(fd, nb3, s3*s3);
+          if(pre_result1==0 || result2==0){
+            int value = 0;
+            write(fd2, &value, sizeof(value));
+          }
+          else{
+            int value = 1;
+            write(fd2, &value, sizeof(value));
+          }
+
+
+
+          write(fd1, nb3, s3*s3);
           exit(0);
         }
         else {
           int pid4 = vfork();
-          //int f4;
+          int pre_result2;
           int s4 = (int)n;
           char nb4[s4*s4];
           if(pid4==0){
             printf("\nforth child checking squares duplication - forthChildID : %d\n", getpid());
 
-            //f4 = open(FIFO_FILE, O_RDWR);
-            //read(f4, nb4, s4*s4);
-            //close(f4);
 
 
-            read(fd, nb4, s4*s4);
+            read(fd1, nb4, s4*s4);
 
             int result3 = -1;
 
@@ -405,19 +402,44 @@ int main(int argc , char *argv[]) {
               printf("NO DUPLICATION IN SQUARES\n");
             }
 
+            read(fd2, &pre_result2, sizeof(pre_result2));
+
+            if(pre_result2==0 || result3==0){
+              int value = 0;
+              write(fd2, &value, sizeof(value));
+            }
+            else{
+              int value = 1;
+              write(fd2, &value, sizeof(value));
+            }
+
 
             exit(0);
           }
 
           else {
+            int pre_result3;
             printf("\nin parent- parentID : %d\n", getpid());
+
+            read(fd2, &pre_result3, sizeof(pre_result3));
+
+            if(pre_result3 == 0){
+              printf("\nSudoku puzzle is wrong\n");
+            }
+            else {
+              printf("\nSudoku puzzle constraints satisfied\n");
+            }
+
+
+
             exit(0);
           }
         }
       }
     }
 
-    close(fd);
+    close(fd1);
+    close(fd2);
 
     return 0;
 
