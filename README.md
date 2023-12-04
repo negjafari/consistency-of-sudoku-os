@@ -18,11 +18,14 @@ Sudoku Consistency Check is a C program designed for validating the consistency 
 
 ## Implementation
 
-   - Parent process reads and decodes the Sudoku puzzle from the input file and send it to decoder process.
+   - Parent process reads the Sudoku puzzle from the input file and send it to decoder process.
    - Decoder process decodes ciphered characters and returns the board.
-   - parent process distributes the board to child processes for consistency checks.
+   - Parent process distributes the board to child processes for consistency checks.
    - Each child process checks its aspect of the Sudoku puzzle.
-   - If constraints are satisfied, outputs: `Sudoku puzzle constraints satisfied`. Otherwise, if incorrect or inconsistent: `Sudoku puzzle is wrong`.
+   - If constraints are satisfied, outputs: `Sudoku puzzle constraints satisfied`. Otherwise, `Sudoku puzzle is wrong`.
 
+
+## Usage
+Select one of testcases in `inputs/` file then run the `p.c`.
 
 
