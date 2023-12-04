@@ -18,7 +18,6 @@ Sudoku Consistency Check is a C program designed for validating the consistency 
 
 ## Implementation
 
-1. **Reading and Decoding**:
    - Parent process reads and decodes the Sudoku puzzle from the input file and send it to decoder process.
    - Decoder process decodes ciphered characters and returns the board.
    - parent process distributes the board to child processes for consistency checks.
